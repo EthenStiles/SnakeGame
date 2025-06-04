@@ -26,8 +26,8 @@ class Game
 		bool checkApple();
 
 	private:	
-		const int boardHeight = 10;
-		const int boardWidth = 15;
+		const int boardHeight = 15;
+		const int boardWidth = 18;
 		std::vector<std::vector<CellType>> board;
 		Snake snake;
 		Apple apple;
