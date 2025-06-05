@@ -24,6 +24,7 @@ class Snake
 		const std::vector<Segment>& getSegments() const { return segments; }
 		void move();
 		void setDirection(Direction d) { direction = d; }
+		Direction getDirection() { return direction; }
 		void grow() { ateApple = true; }
 		int getInitialSize() { return initialSize; }
 	private:

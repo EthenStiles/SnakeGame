@@ -137,15 +137,23 @@ void Game::updateDirection() {
 		char ch = _getch();
 		switch (ch) {
 		case 'w':
+			//prevent snake from going down if it is currently going up
+			if (snake.getDirection() == Direction::DOWN) { return; }
 			snake.setDirection(Direction::UP);
 			break;
 		case 'a':
+			//prevent snake from going left if it is currently going right
+			if (snake.getDirection() == Direction::RIGHT) { return; }
 			snake.setDirection(Direction::LEFT);
 			break;
 		case 's':
+			//prevent snake from going down if it is currently going up
+			if (snake.getDirection() == Direction::UP) { return; }
 			snake.setDirection(Direction::DOWN);
 			break;
 		case 'd':
+			//prevent snake from going right if it is currently going left
+			if (snake.getDirection() == Direction::LEFT) { return; }
 			snake.setDirection(Direction::RIGHT);
 			break;
 		}
