@@ -14,11 +14,12 @@ Snake::Snake()
 
 void Snake::move() 
 {
+	direction = nextDirection;
 	const Segment& head = segments[0];
 	int newX = head.x;
 	int newY = head.y;
 
-	switch (direction) 
+	switch (nextDirection) 
 	{
 		case Direction::UP:
 			newY--;
@@ -41,4 +42,15 @@ void Snake::move()
 	}
 	ateApple = false;
 	
+}
+
+void Snake::setDirection(Direction d) {
+	// Prevent reversing direction
+	if ((direction == Direction::UP && d == Direction::DOWN) ||
+		(direction == Direction::DOWN && d == Direction::UP) ||
+		(direction == Direction::LEFT && d == Direction::RIGHT) ||
+		(direction == Direction::RIGHT && d == Direction::LEFT)) {
+		return;
+	}
+	nextDirection = d;  // Queue the next direction
 }

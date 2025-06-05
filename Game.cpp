@@ -1,10 +1,10 @@
 #include "game.h"
 #include <iostream>
 #include <chrono>
-#include <conio.h>
 #include <thread>
+#include <unordered_map>
 
-Game::Game() 
+Game::Game()
 	: board(boardWidth, std::vector<CellType>(boardHeight, CellType::EMPTY)),
 	  snake(),
 	  apple(),
@@ -14,16 +14,36 @@ Game::Game()
 
 {
 	spawnApple();
+
+	if (!font.loadFromFile("assets/arial.ttf")) {
+		std::cout << "couldn't load font" << std::endl;
+	}
+
+	gameText.setFont(font);
+	gameText.setCharacterSize(18); // pixels
+	gameText.setFillColor(sf::Color::White);
+	gameText.setPosition(5, 5); // top-left corner
 }
 
 std::string Game::startGame() 
 {
 	using clock = std::chrono::steady_clock;
 	auto lastMoveTime = clock::now();
+	std::string result = "";
 	
-	while(true)
+	window.create(sf::VideoMode(boardWidth * tileSize, boardHeight * tileSize), "Snake Game");
+	
+	while(window.isOpen())
 	{
-		updateDirection();
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+				window.close();
+			else if (event.type == sf::Event::KeyPressed)
+				updateDirection(event);
+		}
+
 		auto now = clock::now();
 		if (now - lastMoveTime >= std::chrono::milliseconds(250))
 		{
@@ -32,22 +52,22 @@ std::string Game::startGame()
 			system("cls");
 			if (checkCollision())
 			{
-				std::string result = "";
-				
 				std::string outcome = (score == ((boardHeight * boardWidth) - snake.getInitialSize())) ? "Won!" : "Lost!";
 								
 				result.append("You " + outcome + "\n");
 				result.append("Snake Size: " + std::to_string(snake.getSegments().size()) + "\n");
 				result.append("Score: " + std::to_string(score) + "\n");
 				
-				return result;
+				break;
 			}
 
 			checkApple();
-			drawBoard();
-			
+			updateBoard();
+			drawBoardSFML();
 		}
 	}
+
+	return result;
 }
 
 static char getCellSymbol(CellType c) 
@@ -65,36 +85,92 @@ static char getCellSymbol(CellType c)
 	}
 }
 
-void Game::drawBoard()
+void Game::updateBoard()
 {
-	
 	for (int y = 0; y < boardHeight; y++)
 	{
 		for (int x = 0; x < boardWidth; x++)
 		{
 			board[x][y] = CellType::EMPTY;
+
 		}
 	}
-	
+
 	board[apple.x][apple.y] = CellType::APPLE;
 	
 	for (const Segment& seg : snake.getSegments()) {
 		
 		board[seg.x][seg.y] = CellType::SNAKE;  // or any value to represent the snake
 	}
+
+	std::cout << "Snake Size: " << snake.getSegments().size() << std::endl;
+	std::cout << "Apples Eaten: " << score << std::endl;
+}
+
+void Game::drawBoardSFML()
+{
+	window.clear();
+
+	std::unordered_map<int, int> segmentIndexMap;
+	const auto& segments = snake.getSegments();
+	int max_brightness = 255;
+	int min_brightness = 75;
+
+	for (int i = 0; i < segments.size(); ++i) {
+		int key = segments[i].x + segments[i].y * boardWidth;
+		segmentIndexMap[key] = i;
+	}
 	
 	for (int y = 0; y < boardHeight; y++)
 	{
 		for (int x = 0; x < boardWidth; x++)
 		{
-			std::cout << getCellSymbol(board[x][y]);
-		}
+			sf::RectangleShape tile(sf::Vector2f(tileSize - 2, tileSize - 2));
+			tile.setPosition(x * tileSize, y * tileSize);
 
-		std::cout << std::endl;
+			switch (board[x][y]) 
+			{
+				case CellType::EMPTY: 
+				{
+					tile.setFillColor(sf::Color(25, 25, 25));
+					break;
+				}
+					
+				case CellType::SNAKE: {
+					int key = x + y * boardWidth;
+					auto it = segmentIndexMap.find(key);
+
+					if (it != segmentIndexMap.end()) {
+						int idx = it->second;
+						int total = static_cast<int>(segments.size());
+						int brightness = max_brightness - ((max_brightness - min_brightness) * idx / std::max(1, total - 1));
+						tile.setFillColor(sf::Color(0, brightness, 0));
+					}
+					else {
+						tile.setFillColor(sf::Color::Magenta); // Shouldn't happen: debug color
+					}
+					break;
+				}
+
+				case CellType::APPLE: 
+				{
+					tile.setFillColor(sf::Color::Red);
+					break;
+				}	
+			}
+
+			window.draw(tile);
+		}
 	}
 
-	std::cout << "Snake Size: " << snake.getSegments().size() << std::endl;
-	std::cout << "Apples Eaten: " << score << std::endl;
+	std::string infoStr =
+		"Score: " + std::to_string(score) +
+		" | Snake Size: " + std::to_string(snake.getSegments().size());
+
+	gameText.setString(infoStr);
+	window.draw(gameText);
+
+	window.display();
 }
 
 void Game::spawnApple() 
@@ -132,31 +208,30 @@ bool Game::checkCollision()
 	return false;
 }
 
-void Game::updateDirection() {
-	if (_kbhit()) { // if a key has been pressed
-		char ch = _getch();
-		switch (ch) {
-		case 'w':
+void Game::updateDirection(sf::Event event) {
+	// if a key has been pressed
+	switch (event.key.code) 
+	{
+		case sf::Keyboard::W:
 			//prevent snake from going down if it is currently going up
 			if (snake.getDirection() == Direction::DOWN) { return; }
 			snake.setDirection(Direction::UP);
 			break;
-		case 'a':
+		case sf::Keyboard::A:
 			//prevent snake from going left if it is currently going right
 			if (snake.getDirection() == Direction::RIGHT) { return; }
 			snake.setDirection(Direction::LEFT);
 			break;
-		case 's':
+		case sf::Keyboard::S:
 			//prevent snake from going down if it is currently going up
 			if (snake.getDirection() == Direction::UP) { return; }
 			snake.setDirection(Direction::DOWN);
 			break;
-		case 'd':
+		case sf::Keyboard::D:
 			//prevent snake from going right if it is currently going left
 			if (snake.getDirection() == Direction::LEFT) { return; }
 			snake.setDirection(Direction::RIGHT);
 			break;
-		}
 	}
 }
 

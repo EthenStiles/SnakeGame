@@ -23,7 +23,7 @@ class Snake
 		Snake();
 		const std::vector<Segment>& getSegments() const { return segments; }
 		void move();
-		void setDirection(Direction d) { direction = d; }
+		void setDirection(Direction d);
 		Direction getDirection() { return direction; }
 		void grow() { ateApple = true; }
 		int getInitialSize() { return initialSize; }
@@ -31,6 +31,7 @@ class Snake
 		std::vector<Segment> segments;
 		int initialSize = 3;
 		Direction direction;
+		Direction nextDirection;
 		bool ateApple = false;
 };
 
