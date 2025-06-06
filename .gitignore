@@ -3,6 +3,30 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+#CUSTOM
+# CMake build folders
+/build/
+/CMakeFiles/
+/x64/
+/CMakeCache.txt
+Makefile
+cmake_install.cmake
+
+# Visual Studio generated files
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.VC.db
+
+# Compiled binaries
+*.exe
+*.obj
+*.pdb
+*.lib
+*.dll
+
+
 # User-specific files
 *.rsuser
 *.suo
